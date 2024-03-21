@@ -48,10 +48,17 @@ def get_midi_performance_pairs(df, json_data):
             midi_beats_list = json.load(f)
         with open(ROOT_PATH / "data" / "velocity_beats_list.json", "r") as f:
             velocity_beats_list = json.load(f)
+        with open(ROOT_PATH / "data" / "perf_velocity_beats_list.json", "r") as f:
+            perf_velocity_beats_list = json.load(f)
         with open(ROOT_PATH / "data" / "performance_beats_list.json", "r") as f:
             performance_beats_list = json.load(f)
 
-        return midi_beats_list, velocity_beats_list, performance_beats_list
+        return (
+            midi_beats_list,
+            velocity_beats_list,
+            performance_beats_list,
+            perf_velocity_beats_list,
+        )
 
     else:
         return create_midi_performance_pairs(df, json_data)
@@ -73,17 +80,23 @@ def create_midi_performance_pairs(df, json_data):
     midi_beats_list = []
     velocity_beats_list = []
     performance_beats_list = []
+    perf_velocity_beats_list = []
     for i, row in tqdm(df.iterrows(), total=df.shape[0]):
         performance_path = row["midi_performance"]
         midi_beats = json_data[performance_path]["midi_score_beats"]
         performance_beats = json_data[performance_path]["performance_beats"]
 
-        full_performance_path = ROOT_PATH / performance_path
-        sample_score = music21.converter.parse(full_performance_path)
+        full_midi_path = DATASET_PATH / row["midi_score"]
+        sample_score = music21.converter.parse(full_midi_path)
         velocity_beats = get_velocity_beats_from_score(midi_beats, sample_score)
+
+        full_performance_path = DATASET_PATH / performance_path
+        sample_score = music21.converter.parse(full_performance_path)
+        perf_velocity_beats = get_velocity_beats_from_score(midi_beats, sample_score)
 
         midi_beats_list.append(midi_beats)
         velocity_beats_list.append(velocity_beats)
+        perf_velocity_beats_list.append(perf_velocity_beats)
         performance_beats_list.append(performance_beats)
 
     # save for later use
@@ -91,14 +104,21 @@ def create_midi_performance_pairs(df, json_data):
         json.dump(midi_beats_list, f)
     with open(ROOT_PATH / "data" / "velocity_beats_list.json", "w") as f:
         json.dump(velocity_beats_list, f)
+    with open(ROOT_PATH / "data" / "perf_velocity_beats_list.json", "w") as f:
+        json.dump(perf_velocity_beats_list, f)
     with open(ROOT_PATH / "data" / "performance_beats_list.json", "w") as f:
         json.dump(performance_beats_list, f)
 
-    return midi_beats_list, velocity_beats_list, performance_beats_list
+    return (
+        midi_beats_list,
+        velocity_beats_list,
+        performance_beats_list,
+        perf_velocity_beats_list,
+    )
 
 
 # taken from the exercise session
-def get_velocity_from_score(sample_score):
+def get_events_table_from_score(sample_score):
     rhythm_data_list = []
     for clef in sample_score.parts:
         global_onset = 0
@@ -147,7 +167,7 @@ def get_velocity_from_score(sample_score):
 
 
 def get_velocity_beats_from_score(midi_beats, sample_score):
-    rhythm_data_df = get_velocity_from_score(sample_score)
+    rhythm_data_df = get_events_table_from_score(sample_score)
 
     velocity_beats = []
     for beat in midi_beats:
