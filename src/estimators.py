@@ -113,3 +113,30 @@ def get_estimator_predictions(
     velocity_beats_estimated_list = velocity_estimator.estimate(**test_beats_list_dict)
 
     return performance_beats_estimated_list, velocity_beats_estimated_list
+
+def get_random_est_prediction(train_list, test_list):
+    beat_indices = get_beat_indices(train_list["midi_beats_list"], train_list["midi_downbeats_list"])
+    midi_beat_durations, performance_beat_durations = get_beat_durations(beat_indices, train_list["midi_beats_list"],
+                                                        train_list["performance_beats_list"])
+    mean_durations = get_mean_durations(beat_indices, peformance_beat_durations)
+    variance_durations = get_variance_durations(beat_indices, performance_beat_durations)
+
+    # Get estimated performance tempo for a random test piece
+    np.random.seed(1)
+    idx = np.random.randint(0, len(test_list["midi_beats_list"]))
+    get_random_estimate(mean_durations, variance_durations, test_list, idx)
+
+def get_beat_indices(midi_beats_list, midi_downbeats_list):
+    pass
+
+def get_beat_durations(beat_indices, midi_beats_list, performance_beats_list):
+    pass
+
+def get_mean_durations(beat_indices, peformance_beat_durations):
+    pass
+
+def get_variance_durations(beat_indices, performance_beat_durations):
+    pass
+
+def get_random_estimate(mean, variance, test_list, idx):
+    pass
