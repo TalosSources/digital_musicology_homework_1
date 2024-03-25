@@ -191,7 +191,7 @@ def create_midi_performance_pairs(df, json_data, time_signature):
         json.dump(performance_beats_list, f)'''
 
     beats_list_dict = {
-        "bpm_list": bpm_list
+        "bpm_list": bpm_list,
         "midi_beats_list": midi_beats_list,
         "midi_downbeats_list": midi_downbeats_list,
         #"velocity_beats_list": velocity_beats_list,
@@ -318,75 +318,75 @@ def train_test_split(beats_list_dict, test_size=0.2):
 
     return train_beats_list_dict, test_beats_list_dict
 
-    def train_test_split(beats_list_dict, time_signature, test_size=0.2):
-        bpm_list = beats_list_dict["bpm_list"]
-        midi_beats_list = beats_list_dict["midi_beats_list"]
-        midi_downbeats_list = beats_list_dict["midi_downbeats_list"]
-        #velocity_beats_list = beats_list_dict["velocity_beats_list"]
-        performance_beats_list = beats_list_dict["performance_beats_list"]
-        performance_downbeatbeats_list = beats_list_dict["performance_downbeats_list"]
-        #perf_velocity_beats_list = beats_list_dict["perf_velocity_beats_list"]
+def train_test_split(beats_list_dict, time_signature, test_size=0.2):
+    bpm_list = beats_list_dict["bpm_list"]
+    midi_beats_list = beats_list_dict["midi_beats_list"]
+    midi_downbeats_list = beats_list_dict["midi_downbeats_list"]
+    #velocity_beats_list = beats_list_dict["velocity_beats_list"]
+    performance_beats_list = beats_list_dict["performance_beats_list"]
+    performance_downbeats_list = beats_list_dict["performance_downbeats_list"]
+    #perf_velocity_beats_list = beats_list_dict["perf_velocity_beats_list"]
 
-        np.random.seed(1)
-        test_length = int(len(midi_beats_list) * test_size)
-        test_index = np.random.choice(len(midi_beats_list), size=test_length, replace=False)
-        full_index = np.ones(len(midi_beats_list))
-        full_index[test_index] = 0
+    np.random.seed(1)
+    test_length = int(len(midi_beats_list) * test_size)
+    test_index = np.random.choice(len(midi_beats_list), size=test_length, replace=False)
+    full_index = np.ones(len(midi_beats_list))
+    full_index[test_index] = 0
 
-        train_bpm_list = []
-        train_midi_beats_list = []
-        train_midi_downbeats_list = []
-        #train_velocity_beats_list = []
-        train_performance_beats_list = []
-        train_performance_downbeats_list = []
-        #train_perf_velocity_beats_list = []
+    train_bpm_list = []
+    train_midi_beats_list = []
+    train_midi_downbeats_list = []
+    #train_velocity_beats_list = []
+    train_performance_beats_list = []
+    train_performance_downbeats_list = []
+    #train_perf_velocity_beats_list = []
 
-        test_bpm_list = []
-        test_midi_beats_list = []
-        test_midi_downbeats_list = []
-        #test_velocity_beats_list = []
-        test_performance_beats_list = []
-        test_performance_downbeats_list = []
-        #test_perf_velocity_beats_list = []
+    test_bpm_list = []
+    test_midi_beats_list = []
+    test_midi_downbeats_list = []
+    #test_velocity_beats_list = []
+    test_performance_beats_list = []
+    test_performance_downbeats_list = []
+    #test_perf_velocity_beats_list = []
 
-        for i in range(len(midi_beats_list)):
-            if full_index[i]:  # train
-                train_bpm_list.append(bpm_list[i])
-                train_midi_beats_list.append(midi_beats_list[i])
-                train_midi_downbeats_list.append(midi_downbeats_list[i])
-                #train_velocity_beats_list.append(velocity_beats_list[i])
-                train_performance_beats_list.append(performance_beats_list[i])
-                train_performance_downbeats_list.append(performance_downbeats_list[i])
-                #train_perf_velocity_beats_list.append(perf_velocity_beats_list[i])
-            else:  # test
-                test_bpm_list.append(bpm_list[i])
-                test_midi_beats_list.append(midi_beats_list[i])
-                test_midi_downbeats_list.append(midi_downbeats_list[i])
-                #test_velocity_beats_list.append(velocity_beats_list[i])
-                test_performance_beats_list.append(performance_beats_list[i])
-                test_performance_downbeats_list.append(performance_downbeats_list[i])
-                #test_perf_velocity_beats_list.append(perf_velocity_beats_list[i])
+    for i in range(len(midi_beats_list)):
+        if full_index[i]:  # train
+            train_bpm_list.append(bpm_list[i])
+            train_midi_beats_list.append(midi_beats_list[i])
+            train_midi_downbeats_list.append(midi_downbeats_list[i])
+            #train_velocity_beats_list.append(velocity_beats_list[i])
+            train_performance_beats_list.append(performance_beats_list[i])
+            train_performance_downbeats_list.append(performance_downbeats_list[i])
+            #train_perf_velocity_beats_list.append(perf_velocity_beats_list[i])
+        else:  # test
+            test_bpm_list.append(bpm_list[i])
+            test_midi_beats_list.append(midi_beats_list[i])
+            test_midi_downbeats_list.append(midi_downbeats_list[i])
+            #test_velocity_beats_list.append(velocity_beats_list[i])
+            test_performance_beats_list.append(performance_beats_list[i])
+            test_performance_downbeats_list.append(performance_downbeats_list[i])
+            #test_perf_velocity_beats_list.append(perf_velocity_beats_list[i])
 
-        print(len(midi_beats_list), len(train_midi_beats_list), len(test_midi_beats_list))
+    print(len(midi_beats_list), len(train_midi_beats_list), len(test_midi_beats_list))
 
-        train_beats_list_dict = {
-            "bpm_list": train_bpm_list
-            "midi_beats_list": train_midi_beats_list,
-            "midi_downbeats_list": train_midi_downbeats_list,
-            #"velocity_beats_list": train_velocity_beats_list,
-            "performance_beats_list": train_performance_beats_list,
-            "performance_downbeats_list": train_performance_downbeats_list,
-            #"perf_velocity_beats_list": train_perf_velocity_beats_list,
-        }
+    train_beats_list_dict = {
+        "bpm_list": train_bpm_list,
+        "midi_beats_list": train_midi_beats_list,
+        "midi_downbeats_list": train_midi_downbeats_list,
+        #"velocity_beats_list": train_velocity_beats_list,
+        "performance_beats_list": train_performance_beats_list,
+        "performance_downbeats_list": train_performance_downbeats_list,
+        #"perf_velocity_beats_list": train_perf_velocity_beats_list,
+    }
 
-        test_beats_list_dict = {
-            "bpm_list": test_bpm_list
-            "midi_beats_list": test_midi_beats_list,
-            "midi_downbeats_list": test_midi_downbeats_list,
-            #"velocity_beats_list": test_velocity_beats_list,
-            "performance_beats_list": test_performance_beats_list,
-            "performance_downbeats_list": test_performance_downbeats_list,
-            #"perf_velocity_beats_list": test_perf_velocity_beats_list,
-        }
+    test_beats_list_dict = {
+        "bpm_list": test_bpm_list,
+        "midi_beats_list": test_midi_beats_list,
+        "midi_downbeats_list": test_midi_downbeats_list,
+        #"velocity_beats_list": test_velocity_beats_list,
+        "performance_beats_list": test_performance_beats_list,
+        "performance_downbeats_list": test_performance_downbeats_list,
+        #"perf_velocity_beats_list": test_perf_velocity_beats_list,
+    }
 
-        return train_beats_list_dict, test_beats_list_dict
+    return train_beats_list_dict, test_beats_list_dict
