@@ -115,9 +115,9 @@ def get_estimator_predictions(
     return performance_beats_estimated_list, velocity_beats_estimated_list
 
 def get_random_est_prediction(train_list, test_list):
-    beat_indices, beats_per_measure = get_beat_indices(train_list["midi_beats_list"], train_list["midi_downbeats_list"], train_list["bpm_list"])
+    beat_indices = get_beat_indices(train_list["midi_beats_list"], train_list["midi_downbeats_list"], train_list["bpm_list"])
     performance_beat_durations = get_beat_durations(train_list["performance_beats_list"])
-    mean_durations, variance_durations = get_mean_variance_durations(beat_indices, performance_beat_durations, beats_per_measure)
+    mean_durations, variance_durations = get_mean_variance_durations(beat_indices, performance_beat_durations, beats_per_measure=4)
 
     # Get estimated performance tempo for a random test piece
     np.random.seed(1)
@@ -128,13 +128,13 @@ def get_beat_indices(midi_beats_list, midi_downbeats_list, bpm_list):
     '''Separarates beats depending on the position in the measure'''
     beat_indices = []
     for beats, downbeats, bpm in zip(midi_beats_list, midi_downbeats_list, bpm_list):
-        bps = bpm / 60 # beats per second
+        bps = bpm / 60.0 # beats per second
         nb = bps * (downbeats[1] - downbeats[0]) # beats per measure
         indices = [((j-downbeats[0]) * bps) % nb for j in beats] # indices of beats: 0 is the downbeat, 1 is the beat after, etc.
         indices.pop() # remove last beat from each piece (no duration given)
         beat_indices.append(indices)
 
-    return beat_indices, nb
+    return beat_indices
 
 def get_beat_durations(performance_beats_list):
     '''Returns performance beat durations'''
@@ -145,7 +145,7 @@ def get_beat_durations(performance_beats_list):
 
     return beat_durations
 
-def get_mean_variance_durations(beat_indices, performance_beat_durations, beats_per_measure):
+def get_mean_variance_durations(beat_indices, performance_beat_durations, beats_per_measure=4):
     '''Get mean and variance of durations of beats depending on the position in the measure'''
     mean_durations = [0] * beats_per_measure
     variance_durations = [0] * beats_per_measure
@@ -155,7 +155,10 @@ def get_mean_variance_durations(beat_indices, performance_beat_durations, beats_
             mean_durations[j] += np.mean(filtered_durations)
             variance_durations[j] += np.var(filtered_durations)
 
-    return mean_durations / len(beat_indices), variance_durations / len(beat_indices)
+    mean_durations = [mean / len(beat_indices) for mean in mean_durations]
+    variance_durations = [var / len(beat_indices) for var in variance_durations]
+
+    return mean_durations, variance_durations
 
 def get_random_estimate(means, variances, test_list, idx):
     beat_indices, beats_per_measure = get_beat_indices(test_list["midi_beats_list"], test_list["midi_downbeats_list"], test_list["bpm_list"])
