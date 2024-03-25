@@ -115,12 +115,11 @@ def get_estimator_predictions(
     return performance_beats_estimated_list, velocity_beats_estimated_list
 
 def get_random_est_prediction(train_list, test_list):
-    beat_indices = get_beat_indices(train_list["midi_beats_list"], train_list["midi_downbeats_list"], train_list["bpm_list"])
+    beat_indices, beats_per_measure = get_beat_indices(train_list["midi_beats_list"], train_list["midi_downbeats_list"], train_list["bpm_list"])
     performance_beat_durations = get_beat_durations(train_list["performance_beats_list"])
-    mean_durations, variance_durations = get_mean_variance_durations(beat_indices, performance_beat_durations, beats_per_measure=4)
+    mean_durations, variance_durations = get_mean_variance_durations(beat_indices, performance_beat_durations, beats_per_measure)
 
     # Get estimated performance tempo for a random test piece
-    np.random.seed(1)
     idx = np.random.randint(0, len(test_list["midi_beats_list"]))
     get_random_estimate(mean_durations, variance_durations, test_list, idx)
 
@@ -131,27 +130,28 @@ def get_beat_indices(midi_beats_list, midi_downbeats_list, bpm_list):
         bps = bpm / 60.0 # beats per second
         nb = bps * (downbeats[1] - downbeats[0]) # beats per measure
         indices = [((j-downbeats[0]) * bps) % nb for j in beats] # indices of beats: 0 is the downbeat, 1 is the beat after, etc.
+        indices = [round(j) for j in indices] # round to integers
         indices.pop() # remove last beat from each piece (no duration given)
         beat_indices.append(indices)
 
-    return beat_indices
+    return beat_indices, int(nb)
 
 def get_beat_durations(performance_beats_list):
     '''Returns performance beat durations'''
     beat_durations = []
     for beats in performance_beats_list:
-        durations = [60.0 / (beats[j]-beats[j-1]) for j in range(len(beats)-1)] # compute beat durations in bpm
+        durations = [60.0 / (beats[j+1]-beats[j]) for j in range(len(beats)-1)] # compute beat durations in bpm
         beat_durations.append(durations)
 
     return beat_durations
 
-def get_mean_variance_durations(beat_indices, performance_beat_durations, beats_per_measure=4):
+def get_mean_variance_durations(beat_indices, performance_beat_durations, beats_per_measure):
     '''Get mean and variance of durations of beats depending on the position in the measure'''
     mean_durations = [0] * beats_per_measure
     variance_durations = [0] * beats_per_measure
     for indices, durations in zip(beat_indices, performance_beat_durations):
         for j in range(beats_per_measure):
-            filtered_durations = durations[indices == j]
+            filtered_durations = [durations[i] for i in range(len(durations)) if indices[i] == j]
             mean_durations[j] += np.mean(filtered_durations)
             variance_durations[j] += np.var(filtered_durations)
 
@@ -168,14 +168,15 @@ def get_random_estimate(means, variances, test_list, idx):
     indices = beat_indices[idx]
     performance_durations = performance_beat_durations[idx]
     midi_durations = midi_beat_durations[idx]
-
     estimated_durations = []
     for j in indices:
-        estimated_durations.append(np.sqrt(variances[j]) * np.randn() + means[j]) # Compute random durations from a normal distribution with mean and variance obtained from the train sub-corpus
-    
+        idx = int(j)
+        estimated_durations.append(np.sqrt(variances[idx]) * np.random.randn() + means[idx]) # Compute random durations from a normal distribution with mean and variance obtained from the train sub-corpus
+
     # Plot results
     fig, ax = plt.subplots()
     ax.plot(midi_beats[:-1], estimated_durations, label="Estimated bpm")
     ax.plot(midi_beats[:-1], performance_durations, label="Performance bpm")
     ax.plot(midi_beats[:-1], midi_durations, label="MIDI bpm")
+    ax.legend()
     fig.savefig("test.png")
