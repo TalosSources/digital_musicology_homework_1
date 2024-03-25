@@ -2,6 +2,11 @@ import matplotlib.pyplot as plt
 import music21
 import numpy as np
 from pandas import DataFrame
+import matplotlib.ticker as ticker
+import os
+import pandas as pd
+import re
+import xml.etree.ElementTree as ET
 
 from src.data import get_events_table_from_score
 
@@ -29,8 +34,10 @@ def compute_average_distribution(score_paths, sig=(4, 4), subdivision=4):
     ax.set_xlabel("Onset in Measure")
     ax.set_ylabel("")
     ax.set_title("Average Relative Frequency of Onset Locations")
-    ax.set_xlim(0, 4)
+    ax.set_xlim(0, sig[0])
     ax.set_ylim(0, 0.5)
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(0.5))
+
 
 
 def compute_distribution(score_path, beat_locations):
@@ -40,7 +47,7 @@ def compute_distribution(score_path, beat_locations):
     """
 
     sample_score = music21.converter.parse(score_path)
-    sample_score.show("midi")
+    # sample_score.show("midi")
     events = get_events_table_from_score(sample_score)
 
     onsets = filter_onsets(events, beat_locations)
@@ -82,3 +89,85 @@ def filter_onsets(events: DataFrame, beat_locations):
     onsets = events[sounded_mask & tie_mask]["onset_in_measure"]
     onsets = onsets[onsets.isin(beat_locations)]
     return onsets.tolist()
+
+
+def get_average_distribution_given_time_signature(corpus, time_signature):
+    '''
+    This function extracts all pieces with a specific time signature (ex. 4/4) from a corpus and
+    computes the average distribution for them
+    '''
+    matching_pieces = [piece for piece in os.listdir(corpus) if extract_time_signature_from_xml(corpus / piece / 'xml_score.musicxml') == time_signature]
+    score_paths = [corpus / piece / "midi_score.mid" for piece in matching_pieces]
+    print(f'Time signature {time_signature} is present in {len(score_paths)} pieces.')
+    compute_average_distribution(score_paths, sig=time_signature, subdivision=time_signature[-1])
+    
+def convert_annotation_to_interval(annotation:pd.DataFrame, beats:int) -> pd.Series:
+    '''
+    annotation: dataframe of the annotation file
+    beats: indication how many beats in a bar. e.g. 3 in 3/4
+    output: series containing time passed since last downbeat 
+    ex. [1,2,3,4,5,6] -> [1,2,3,1,2,3] in a 3/4 pattern
+    '''
+    # create array containing time of last downbeat
+    bar_onsets = beats * [0]
+    for time, beat in zip(annotation.iloc[:,0], annotation.iloc[:,2]):
+        # time of last downbeat
+        if 'db' in beat:
+            bar_onsets += beats * [time]
+
+    # remove last downbeats (list gets too long)
+    bar_onsets = bar_onsets[:-beats]
+    
+    # calculate time passed since last downbeat
+    interval_timings = annotation.iloc[:,0] - pd.Series(bar_onsets)
+    interval_timings = pd.Series(interval_timings)
+    
+    return interval_timings
+
+def match_regex_for_series(srs:pd.Series, pattern) -> list:
+    matched_lines = []
+    for idx, info in enumerate(srs):
+        match = re.search(pattern, info)
+        if match:
+            matched_lines.append((idx, match.group(1)))
+    return matched_lines
+
+def extract_time_signatures_from_annotation(df:pd.DataFrame) -> list:
+    # find all time signatures in beat info series
+    pattern = r"^db,([0-9]+/[0-9]+)"
+    matched_lines = match_regex_for_series(df.iloc[:,2], pattern)
+    time_signatures = []
+    for line in matched_lines:
+        idx, info = line
+        ts = info.split('/')
+        ts = [int(x) for x in ts]
+        time_signatures.append((idx, ts))
+    return time_signatures
+
+def extract_time_signature_from_xml(file):
+    tree = ET.parse(file)
+    root = tree.getroot()
+
+    # Find the time signature element
+    time_signature_element = root.find(".//time")
+
+    if time_signature_element is not None:
+        beats_element = time_signature_element.find("beats")
+        beat_type_element = time_signature_element.find("beat-type")
+
+        if beats_element is not None and beat_type_element is not None:
+            beats = beats_element.text
+            beat_type = beat_type_element.text
+            return (int(beats), int(beat_type))
+        else:
+            return "Time signature not found in the XML file."
+    else:
+        return "Time signature not found in the XML file."
+    
+def normalize_interval(srs:pd.Series, beats:int) -> pd.Series:
+    ones = srs.index % beats == 1
+    normalization_factor = srs.loc[ones].median()
+    normalized_series = srs / normalization_factor
+    return normalized_series
+        
+    

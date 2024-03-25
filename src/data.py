@@ -6,6 +6,7 @@ import music21
 import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
+import re
 
 ROOT_PATH = Path(__file__).absolute().resolve().parent.parent
 DATASET_PATH = ROOT_PATH / "data" / "asap-dataset"
