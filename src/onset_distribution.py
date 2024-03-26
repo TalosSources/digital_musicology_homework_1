@@ -101,25 +101,28 @@ def get_average_distribution_given_time_signature(corpus, time_signature):
     print(f'Time signature {time_signature} is present in {len(score_paths)} pieces.')
     compute_average_distribution(score_paths, sig=time_signature, subdivision=time_signature[-1])
     
-def convert_annotation_to_interval(annotation:pd.DataFrame, beats:int) -> pd.Series:
+def calculate_inter_onset_intervals(annotation:pd.DataFrame, beats:int) -> pd.Series:
     '''
     annotation: dataframe of the annotation file
     beats: indication how many beats in a bar. e.g. 3 in 3/4
     output: series containing time passed since last downbeat 
     ex. [1,2,3,4,5,6] -> [1,2,3,1,2,3] in a 3/4 pattern
     '''
-    # create array containing time of last downbeat
-    bar_onsets = beats * [0]
-    for time, beat in zip(annotation.iloc[:,0], annotation.iloc[:,2]):
-        # time of last downbeat
-        if 'db' in beat:
-            bar_onsets += beats * [time]
-
-    # remove last downbeats (list gets too long)
-    bar_onsets = bar_onsets[:-beats]
     
-    # calculate time passed since last downbeat
-    interval_timings = annotation.iloc[:,0] - pd.Series(bar_onsets)
+    # OLD IMPLEMENTATION
+    # create array containing time of last downbeat
+    # bar_onsets = beats * [0]
+    # for time, beat in zip(annotation.iloc[:,0], annotation.iloc[:,2]):
+    #     # time of last downbeat
+    #     if 'db' in beat:
+    #         bar_onsets += beats * [time]
+
+    # # remove last downbeats (list gets too long)
+    # bar_onsets = bar_onsets[:-beats]
+    # # calculate time passed since last downbeat
+    # interval_timings = annotation.iloc[:,0] - pd.Series(bar_onsets)
+    
+    interval_timings = [annotation.iloc[0,0]]+[annotation.iloc[i,0] - annotation.iloc[i-1,0] for i in range(1,len(annotation))]
     interval_timings = pd.Series(interval_timings)
     
     return interval_timings
@@ -132,8 +135,10 @@ def match_regex_for_series(srs:pd.Series, pattern) -> list:
             matched_lines.append((idx, match.group(1)))
     return matched_lines
 
-def extract_time_signatures_from_annotation(df:pd.DataFrame) -> list:
+def extract_time_signatures_from_annotation(df: pd.DataFrame | str) -> list:
     # find all time signatures in beat info series
+    if isinstance(df, str):
+        df = pd.read_table(df, header=None)
     pattern = r"^db,([0-9]+/[0-9]+)"
     matched_lines = match_regex_for_series(df.iloc[:,2], pattern)
     time_signatures = []
@@ -170,4 +175,3 @@ def normalize_interval(srs:pd.Series, beats:int) -> pd.Series:
     normalized_series = srs / normalization_factor
     return normalized_series
         
-    
