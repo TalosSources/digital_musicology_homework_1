@@ -169,5 +169,11 @@ def normalize_interval(srs:pd.Series, beats:int) -> pd.Series:
     normalization_factor = srs.loc[ones].median()
     normalized_series = srs / normalization_factor
     return normalized_series
+
+def style_expressiveness_analysis():
+    """
+    This function computes, for each pre-defined musical style, the average expressiveness metric, 
+    and compares, report and plot? the results 
+    """
         
     
