@@ -10,6 +10,7 @@ import pandas as pd
 from pandas import DataFrame
 from scipy.stats import levene
 from pathlib import PosixPath
+from typing import Union
 
 from src.data import classical, get_events_table_from_score, romantic
 
@@ -150,7 +151,7 @@ def match_regex_for_series(srs: pd.Series, pattern) -> list:
     return matched_lines
 
 
-def extract_time_signatures_from_annotation(df: pd.DataFrame | str) -> list:
+def extract_time_signatures_from_annotation(df: Union[pd.DataFrame, str]) -> list:
     # find all time signatures in beat info series
     if isinstance(df, str):
         df = pd.read_table(df, header=None)
