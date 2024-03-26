@@ -1,12 +1,12 @@
 import json
 import math
+import re
 from pathlib import Path
 
 import music21
 import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
-import re
 
 ROOT_PATH = Path(__file__).absolute().resolve().parent.parent
 DATASET_PATH = ROOT_PATH / "data" / "asap-dataset"
@@ -122,6 +122,7 @@ def create_midi_performance_pairs(df, json_data):
 
     return beats_list_dict
 
+
 def create_midi_performance_pairs(df, json_data, time_signature):
     """
     Creates pairs of midi beats and its performed version
@@ -139,18 +140,20 @@ def create_midi_performance_pairs(df, json_data, time_signature):
     bpm_list = []
     midi_beats_list = []
     midi_downbeats_list = []
-    #velocity_beats_list = []
+    # velocity_beats_list = []
     performance_beats_list = []
     performance_downbeats_list = []
-    #perf_velocity_beats_list = []
+    # perf_velocity_beats_list = []
 
     for i, row in tqdm(df.iterrows(), total=df.shape[0]):
         performance_path = row["midi_performance"]
         ts_dict = json_data[performance_path]["midi_score_time_signatures"]
 
-        if len(ts_dict) == 1: # filter out pieces with more than one time signature
-            ts = ts_dict.popitem()[1][0] # extract time signature str from dict
-            if ts == time_signature: # filter out pieces with other time signatures than the desired one
+        if len(ts_dict) == 1:  # filter out pieces with more than one time signature
+            ts = ts_dict.popitem()[1][0]  # extract time signature str from dict
+            if (
+                ts == time_signature
+            ):  # filter out pieces with other time signatures than the desired one
                 midi_beats = json_data[performance_path]["midi_score_beats"]
                 midi_downbeats = json_data[performance_path]["midi_score_downbeats"]
                 performance_beats = json_data[performance_path]["performance_beats"]
@@ -166,10 +169,8 @@ def create_midi_performance_pairs(df, json_data, time_signature):
                 midi_downbeats_list.append(midi_downbeats)
                 performance_beats_list.append(performance_beats)
                 performance_downbeats_list.append(performance_downbeats)
-                
 
-
-        '''full_midi_path = DATASET_PATH / row["midi_score"]
+        """full_midi_path = DATASET_PATH / row["midi_score"]
         sample_score = music21.converter.parse(full_midi_path)
         velocity_beats = get_velocity_beats_from_score(midi_beats, sample_score)
 
@@ -188,16 +189,16 @@ def create_midi_performance_pairs(df, json_data, time_signature):
     with open(ROOT_PATH / "data" / "perf_velocity_beats_list.json", "w") as f:
         json.dump(perf_velocity_beats_list, f)
     with open(ROOT_PATH / "data" / "performance_beats_list.json", "w") as f:
-        json.dump(performance_beats_list, f)'''
+        json.dump(performance_beats_list, f)"""
 
     beats_list_dict = {
         "bpm_list": bpm_list,
         "midi_beats_list": midi_beats_list,
         "midi_downbeats_list": midi_downbeats_list,
-        #"velocity_beats_list": velocity_beats_list,
+        # "velocity_beats_list": velocity_beats_list,
         "performance_beats_list": performance_beats_list,
         "performance_downbeats_list": performance_downbeats_list,
-        #"perf_velocity_beats_list": perf_velocity_beats_list,
+        # "perf_velocity_beats_list": perf_velocity_beats_list,
     }
 
     return beats_list_dict
@@ -318,14 +319,15 @@ def train_test_split(beats_list_dict, test_size=0.2):
 
     return train_beats_list_dict, test_beats_list_dict
 
+
 def train_test_split(beats_list_dict, time_signature, test_size=0.2):
     bpm_list = beats_list_dict["bpm_list"]
     midi_beats_list = beats_list_dict["midi_beats_list"]
     midi_downbeats_list = beats_list_dict["midi_downbeats_list"]
-    #velocity_beats_list = beats_list_dict["velocity_beats_list"]
+    # velocity_beats_list = beats_list_dict["velocity_beats_list"]
     performance_beats_list = beats_list_dict["performance_beats_list"]
     performance_downbeats_list = beats_list_dict["performance_downbeats_list"]
-    #perf_velocity_beats_list = beats_list_dict["perf_velocity_beats_list"]
+    # perf_velocity_beats_list = beats_list_dict["perf_velocity_beats_list"]
 
     np.random.seed(1)
     test_length = int(len(midi_beats_list) * test_size)
@@ -336,55 +338,79 @@ def train_test_split(beats_list_dict, time_signature, test_size=0.2):
     train_bpm_list = []
     train_midi_beats_list = []
     train_midi_downbeats_list = []
-    #train_velocity_beats_list = []
+    # train_velocity_beats_list = []
     train_performance_beats_list = []
     train_performance_downbeats_list = []
-    #train_perf_velocity_beats_list = []
+    # train_perf_velocity_beats_list = []
 
     test_bpm_list = []
     test_midi_beats_list = []
     test_midi_downbeats_list = []
-    #test_velocity_beats_list = []
+    # test_velocity_beats_list = []
     test_performance_beats_list = []
     test_performance_downbeats_list = []
-    #test_perf_velocity_beats_list = []
+    # test_perf_velocity_beats_list = []
 
     for i in range(len(midi_beats_list)):
         if full_index[i]:  # train
             train_bpm_list.append(bpm_list[i])
             train_midi_beats_list.append(midi_beats_list[i])
             train_midi_downbeats_list.append(midi_downbeats_list[i])
-            #train_velocity_beats_list.append(velocity_beats_list[i])
+            # train_velocity_beats_list.append(velocity_beats_list[i])
             train_performance_beats_list.append(performance_beats_list[i])
             train_performance_downbeats_list.append(performance_downbeats_list[i])
-            #train_perf_velocity_beats_list.append(perf_velocity_beats_list[i])
+            # train_perf_velocity_beats_list.append(perf_velocity_beats_list[i])
         else:  # test
             test_bpm_list.append(bpm_list[i])
             test_midi_beats_list.append(midi_beats_list[i])
             test_midi_downbeats_list.append(midi_downbeats_list[i])
-            #test_velocity_beats_list.append(velocity_beats_list[i])
+            # test_velocity_beats_list.append(velocity_beats_list[i])
             test_performance_beats_list.append(performance_beats_list[i])
             test_performance_downbeats_list.append(performance_downbeats_list[i])
-            #test_perf_velocity_beats_list.append(perf_velocity_beats_list[i])
+            # test_perf_velocity_beats_list.append(perf_velocity_beats_list[i])
 
     train_beats_list_dict = {
         "bpm_list": train_bpm_list,
         "midi_beats_list": train_midi_beats_list,
         "midi_downbeats_list": train_midi_downbeats_list,
-        #"velocity_beats_list": train_velocity_beats_list,
+        # "velocity_beats_list": train_velocity_beats_list,
         "performance_beats_list": train_performance_beats_list,
         "performance_downbeats_list": train_performance_downbeats_list,
-        #"perf_velocity_beats_list": train_perf_velocity_beats_list,
+        # "perf_velocity_beats_list": train_perf_velocity_beats_list,
     }
 
     test_beats_list_dict = {
         "bpm_list": test_bpm_list,
         "midi_beats_list": test_midi_beats_list,
         "midi_downbeats_list": test_midi_downbeats_list,
-        #"velocity_beats_list": test_velocity_beats_list,
+        # "velocity_beats_list": test_velocity_beats_list,
         "performance_beats_list": test_performance_beats_list,
         "performance_downbeats_list": test_performance_downbeats_list,
-        #"perf_velocity_beats_list": test_perf_velocity_beats_list,
+        # "perf_velocity_beats_list": test_perf_velocity_beats_list,
     }
 
     return train_beats_list_dict, test_beats_list_dict
+
+
+def classical():
+    """
+    Returns a list of annotation paths for performed classical pieces
+    """
+    annotation_path = (
+        DATASET_PATH
+        / "Mozart"
+        / "Piano_Sonatas"
+        / "8-1"
+        / "Bogdanovitch01_annotations.txt"
+    )
+    return [annotation_path]
+
+
+def romantic():
+    """
+    Returns a list of annotation paths for classical pieces
+    """
+    annotation_path = (
+        DATASET_PATH / "Chopin" / "Barcarolle" / "Kociuban13_annotations.txt"
+    )
+    return [annotation_path]
