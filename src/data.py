@@ -367,8 +367,6 @@ def train_test_split(beats_list_dict, time_signature, test_size=0.2):
             test_performance_downbeats_list.append(performance_downbeats_list[i])
             #test_perf_velocity_beats_list.append(perf_velocity_beats_list[i])
 
-    print(len(midi_beats_list), len(train_midi_beats_list), len(test_midi_beats_list))
-
     train_beats_list_dict = {
         "bpm_list": train_bpm_list,
         "midi_beats_list": train_midi_beats_list,
