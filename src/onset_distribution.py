@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 from pandas import DataFrame
 from scipy.stats import levene
+from pathlib import PosixPath
+from typing import Union
 
 from src.data import classical, get_events_table_from_score, romantic, get_composer_pieces
 
@@ -149,7 +151,7 @@ def match_regex_for_series(srs: pd.Series, pattern) -> list:
     return matched_lines
 
 
-def extract_time_signatures_from_annotation(df: pd.DataFrame | str) -> list:
+def extract_time_signatures_from_annotation(df: Union[pd.DataFrame, str]) -> list:
     # find all time signatures in beat info series
     if isinstance(df, str):
         df = pd.read_table(df, header=None)
@@ -192,7 +194,7 @@ def normalize_interval(srs: pd.Series, beats: int) -> pd.Series:
     return normalized_series
 
 
-def annotation_to_inter_onset_intervals(annotation_path: str):
+def annotation_to_inter_onset_intervals(annotation_path: str) -> pd.Series:
     annotation = pd.read_table(annotation_path, header=None)
     ts = extract_time_signatures_from_annotation(annotation)
     onset, time_signature = ts[0]
@@ -225,6 +227,21 @@ def get_levene_test_results(interval: pd.Series, beats: int) -> tuple[float, flo
         samples.append(sample)
     statistic, p_value = levene(*samples)
     return statistic, p_value
+
+def collect_pieces_with_time_signature(subcorpus:PosixPath, time_signature:list[int]) -> list[str]:
+    '''
+    function that goes through all pieces of a subcorpus and checks if the time signature is the same as provided
+    '''
+    annotations = []
+    for piece in subcorpus.iterdir():
+        if piece.is_dir():
+            for annotation in piece.glob('*_annotations.txt'):
+                # exclude the midi score annotations
+                if 'midi_score_annotations.txt' in str(annotation):
+                    continue
+                if extract_time_signatures_from_annotation(str(annotation))[0][1] == time_signature:
+                    annotations.append(str(annotation))
+    return annotations
 
 
 def unique_expressiveness_measure(piece):
