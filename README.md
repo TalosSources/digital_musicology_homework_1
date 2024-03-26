@@ -55,7 +55,24 @@ Follow this steps to reproduce our work:
 
 ## Project Structure
 
-All main functions are written in the `src` directory. The `experiments.ipynb` file in the root directory provides all the scripts to reproduce figures, tables, etc. from our report.
+The project structure is as follows:
+
+```bash
+├── data                         # dir for all data, including raw and processed datasets
+│   ├── asap-dataset
+├── ex1                          # code from exercise session used for reference
+│   ├── dependencies
+│   └── rhythm_tutorial_1.ipynb
+├── experiments.ipynb            # scripts for figures and tables
+├── README.md                    # this file
+├── requirements.txt             # list of required packages
+└── src                          # package with core implementations
+    ├── data.py                  # data loading and processing
+    ├── estimators.py            # estimators for Task_A
+    ├── __init__.py
+    ├── onset_distribution.py    # methods and plots used for Task_B
+    ├── plots.py                 # plot functions for Task_A
+```
 
 ## Authors
 

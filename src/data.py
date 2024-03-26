@@ -122,13 +122,14 @@ def create_midi_performance_pairs(df, json_data, time_signature):
 
     for i, row in tqdm(df.iterrows(), total=df.shape[0]):
         performance_path = row["midi_performance"]
+        if "Bach/Prelude/bwv_885/" in performance_path:
+            continue  # json for this dir is broken (wrong midi beats: 1.42 instead of 0.5)
         ts_dict = json_data[performance_path]["midi_score_time_signatures"]
 
         if len(ts_dict) == 1:  # filter out pieces with more than one time signature
             ts = ts_dict.popitem()[1][0]  # extract time signature str from dict
-            if (
-                ts == time_signature
-            ):  # filter out pieces with other time signatures than the desired one
+            # filter out pieces with other time signatures than the desired one
+            if ts == time_signature:
                 midi_beats = json_data[performance_path]["midi_score_beats"]
                 midi_downbeats = json_data[performance_path]["midi_score_downbeats"]
                 performance_beats = json_data[performance_path]["performance_beats"]
