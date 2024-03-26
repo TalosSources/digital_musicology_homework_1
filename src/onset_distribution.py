@@ -10,7 +10,7 @@ import pandas as pd
 from pandas import DataFrame
 from scipy.stats import levene
 
-from src.data import classical, get_events_table_from_score, romantic
+from src.data import classical, get_events_table_from_score, romantic, get_composer_pieces
 
 
 def compute_average_distribution(score_paths, sig=(4, 4), subdivision=4):
@@ -234,23 +234,29 @@ def unique_expressiveness_measure(piece):
     """
     interval: pd.Series = annotation_to_inter_onset_intervals(piece)
     stats: DataFrame = get_interval_statistics(interval, 4)
-    return stats["std"].sum()
+    return stats["std"].mean()
+
+def mean_expressiveness(pieces):
+    mean = 0
+    l = len(pieces)
+    for piece in pieces:
+        mean += unique_expressiveness_measure(piece) / l
+    return mean
 
 
-def style_expressiveness_analysis():
+def style_expressiveness_analysis(styles_composers):
     """
     This function computes, for each pre-defined musical style, the average expressiveness metric,
     and compares, report and plot? the results
+    styles is a list of list of composers
     """
-    styles = [
-        classical(),
-        romantic(),
-    ]  # a list of styles, and each style is a list of pieces or corpuses in this style?
+    all_composers = []
+    for composers in styles_composers:
+        all_composers.extend(composers)
+    all_pieces = get_composer_pieces(all_composers) # do this for efficiency
+    style_pieces = [all_pieces.loc[all_pieces["composer"] == style]]
     avg_expr = []
-    for style in styles:
-        expressiveness = 0
-        for piece in style:
-            expressiveness += unique_expressiveness_measure(piece) / len(style)
-        avg_expr.append(expressiveness)
+    for style_pieces in styles_pieces:
+        avg_expr.append(mean_expressiveness(composers))
 
     return avg_expr

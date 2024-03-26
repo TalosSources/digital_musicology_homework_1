@@ -31,6 +31,21 @@ def get_dataset_metadata(composer):
 
     return df, json_data
 
+def get_composer_pieces(composers):
+    """
+    composers: list of string
+    returns a map between a composer name and a list of performance annotation paths
+    TODO (maybe) : remove no-repeat pieces. They shouldn't change the average however
+    """
+    df = pd.read_csv(DATASET_PATH / "metadata.csv")
+    df = df[["composer", "performance_annotations"]]
+    pieces_map = {}
+    for c in composers:
+        mask = (df["composer"] == c)
+        pieces = df.loc[mask]["performance_annotations"]
+        pieces_map[c] = pieces
+    return pieces_map
+
 
 def get_midi_performance_pairs(df, json_data):
     """
@@ -392,6 +407,33 @@ def train_test_split(beats_list_dict, time_signature, test_size=0.2):
     return train_beats_list_dict, test_beats_list_dict
 
 
+classical_composers = [
+    #"Mozart",
+    "Haydn",
+    #"Beethoven" # Not entirely classical
+]
+baroque_composers = [
+    "Bach"
+]
+romantic_composers = [
+    "Brahms",
+    #"Chopin",
+    #"Liszt",
+    #"Schubert",
+    #"Schumann"
+]
+impressionist_composers = [
+    "Debussy",
+    "Ravel"
+]
+late_russian_composers = [
+    "Balakirev",
+    "Glinka",
+    "Prokofiev",
+    "Rachmaninoff",
+    "Scriabin"
+]
+
 def classical():
     """
     Returns a list of annotation paths for performed classical pieces
@@ -403,7 +445,11 @@ def classical():
         / "8-1"
         / "Bogdanovitch01_annotations.txt"
     )
-    return [annotation_path]
+    pieces = []
+    for composer in classical_composers:
+        print(composer)
+        return get_dataset_metadata(composer)
+    
 
 
 def romantic():
