@@ -31,20 +31,22 @@ def get_dataset_metadata(composer):
 
     return df, json_data
 
-def get_composer_pieces(composers):
+
+def get_composer_pieces(composers, df=None):
     """
     composers: list of string
     returns a map between a composer name and a list of performance annotation paths
     TODO (maybe) : remove no-repeat pieces. They shouldn't change the average however
     """
-    df = pd.read_csv(DATASET_PATH / "metadata.csv")
+    if df is None:
+        df = pd.read_csv(DATASET_PATH / "metadata.csv")
     df = df[["composer", "performance_annotations"]]
-    pieces_map = {}
-    for c in composers:
-        mask = (df["composer"] == c)
-        pieces = df.loc[mask]["performance_annotations"]
-        pieces_map[c] = pieces
-    return pieces_map
+    # pieces_map = {}
+    # for c in composers:
+    #    mask = (df["composer"] == c)
+    #    pieces = df.loc[mask]["performance_annotations"]
+    #    pieces_map[c] = pieces
+    return df.loc[df["composer"].isin(composers)]
 
 
 def get_midi_performance_pairs(df, json_data, time_signature):
@@ -142,7 +144,7 @@ def create_midi_performance_pairs(df, json_data, time_signature):
                 midi_downbeats_list.append(midi_downbeats)
                 performance_beats_list.append(performance_beats)
                 performance_downbeats_list.append(performance_downbeats)
-                
+
                 # Get velocity data
                 full_midi_path = DATASET_PATH / row["midi_score"]
                 sample_score = music21.converter.parse(full_midi_path)
@@ -150,7 +152,9 @@ def create_midi_performance_pairs(df, json_data, time_signature):
 
                 full_performance_path = DATASET_PATH / performance_path
                 sample_score = music21.converter.parse(full_performance_path)
-                perf_velocity_beats = get_velocity_beats_from_score(midi_beats, sample_score)
+                perf_velocity_beats = get_velocity_beats_from_score(
+                    midi_beats, sample_score
+                )
 
                 velocity_beats_list.append(velocity_beats)
                 perf_velocity_beats_list.append(perf_velocity_beats)
@@ -319,56 +323,14 @@ def train_test_split(beats_list_dict, test_size=0.2):
     return train_beats_list_dict, test_beats_list_dict
 
 
-classical_composers = [
-    #"Mozart",
-    "Haydn",
-    #"Beethoven" # Not entirely classical
-]
-baroque_composers = [
-    "Bach"
-]
-romantic_composers = [
-    "Brahms",
-    #"Chopin",
-    #"Liszt",
-    #"Schubert",
-    #"Schumann"
-]
-impressionist_composers = [
-    "Debussy",
-    "Ravel"
-]
+classical_composers = ["Mozart", "Haydn", "Beethoven"]  # Not entirely classical
+baroque_composers = ["Bach"]
+romantic_composers = ["Brahms", "Chopin", "Liszt", "Schubert", "Schumann"]
+impressionist_composers = ["Debussy", "Ravel"]
 late_russian_composers = [
     "Balakirev",
     "Glinka",
     "Prokofiev",
     "Rachmaninoff",
-    "Scriabin"
+    "Scriabin",
 ]
-
-def classical():
-    """
-    Returns a list of annotation paths for performed classical pieces
-    """
-    annotation_path = (
-        DATASET_PATH
-        / "Mozart"
-        / "Piano_Sonatas"
-        / "8-1"
-        / "Bogdanovitch01_annotations.txt"
-    )
-    pieces = []
-    for composer in classical_composers:
-        print(composer)
-        return get_dataset_metadata(composer)
-    
-
-
-def romantic():
-    """
-    Returns a list of annotation paths for classical pieces
-    """
-    annotation_path = (
-        DATASET_PATH / "Chopin" / "Barcarolle" / "Kociuban13_annotations.txt"
-    )
-    return [annotation_path]

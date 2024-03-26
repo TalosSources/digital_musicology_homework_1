@@ -1,18 +1,19 @@
 import os
 import re
 import xml.etree.ElementTree as ET
+from pathlib import PosixPath
+from typing import Union
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import music21
 import numpy as np
 import pandas as pd
+import tqdm
 from pandas import DataFrame
 from scipy.stats import levene
-from pathlib import PosixPath
-from typing import Union
 
-from src.data import classical, get_events_table_from_score, romantic, get_composer_pieces
+from src.data import DATASET_PATH, get_composer_pieces, get_events_table_from_score
 
 
 def compute_average_distribution(score_paths, sig=(4, 4), subdivision=4):
@@ -228,18 +229,24 @@ def get_levene_test_results(interval: pd.Series, beats: int) -> tuple[float, flo
     statistic, p_value = levene(*samples)
     return statistic, p_value
 
-def collect_pieces_with_time_signature(subcorpus:PosixPath, time_signature:list[int]) -> list[str]:
-    '''
+
+def collect_pieces_with_time_signature(
+    subcorpus: PosixPath, time_signature: list[int]
+) -> list[str]:
+    """
     function that goes through all pieces of a subcorpus and checks if the time signature is the same as provided
-    '''
+    """
     annotations = []
     for piece in subcorpus.iterdir():
         if piece.is_dir():
-            for annotation in piece.glob('*_annotations.txt'):
+            for annotation in piece.glob("*_annotations.txt"):
                 # exclude the midi score annotations
-                if 'midi_score_annotations.txt' in str(annotation):
+                if "midi_score_annotations.txt" in str(annotation):
                     continue
-                if extract_time_signatures_from_annotation(str(annotation))[0][1] == time_signature:
+                if (
+                    extract_time_signatures_from_annotation(str(annotation))[0][1]
+                    == time_signature
+                ):
                     annotations.append(str(annotation))
     return annotations
 
@@ -249,15 +256,16 @@ def unique_expressiveness_measure(piece):
     Compresses the expressiveness analysis down to a single number for easy inter-style/composer analysis
     given a piece in the form of an annotation path
     """
-    interval: pd.Series = annotation_to_inter_onset_intervals(piece)
+    interval: pd.Series = annotation_to_inter_onset_intervals(DATASET_PATH / piece)
     stats: DataFrame = get_interval_statistics(interval, 4)
     return stats["std"].mean()
 
+
 def mean_expressiveness(pieces):
     mean = 0
-    l = len(pieces)
+    piece_count = len(pieces)
     for piece in pieces:
-        mean += unique_expressiveness_measure(piece) / l
+        mean += unique_expressiveness_measure(piece) / piece_count
     return mean
 
 
@@ -270,10 +278,35 @@ def style_expressiveness_analysis(styles_composers):
     all_composers = []
     for composers in styles_composers:
         all_composers.extend(composers)
-    all_pieces = get_composer_pieces(all_composers) # do this for efficiency
-    style_pieces = [all_pieces.loc[all_pieces["composer"] == style]]
+    print(f"all composers = {all_composers}")
+    all_pieces = get_composer_pieces(all_composers)  # do this for efficiency
+    styles_pieces = [
+        all_pieces.loc[all_pieces["composer"].isin(style_composers)][
+            "performance_annotations"
+        ]
+        for style_composers in styles_composers
+    ]
     avg_expr = []
     for style_pieces in styles_pieces:
-        avg_expr.append(mean_expressiveness(composers))
+        avg_expr.append(mean_expressiveness(style_pieces))
 
     return avg_expr
+
+
+def composer_expressiveness_analysis():
+    df = pd.read_csv(DATASET_PATH / "metadata.csv")
+    composers = df["composer"].unique()
+    all_pieces = get_composer_pieces(composers, df=df)
+    composers_pieces = [
+        all_pieces.loc[all_pieces["composer"] == composer]["performance_annotations"]
+        for composer in composers
+    ]
+    avg_expr = []
+    for composer_pieces in tqdm.tqdm(composers_pieces, "computing averages:"):
+        avg_expr.append(mean_expressiveness(composer_pieces))
+
+    res = {}
+    for composer, expressiveness in zip(composers, avg_expr):
+        res[composer] = expressiveness
+
+    return res
