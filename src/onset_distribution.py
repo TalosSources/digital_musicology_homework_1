@@ -35,7 +35,7 @@ def compute_average_distribution(score_paths, sig=(4, 4), subdivision=4):
 
     beat_frequencies /= len(score_paths)
 
-    plot_beat_frequencies(beat_frequencies, beat_locations)
+    plot_beat_frequencies(beat_locations, beat_frequencies, sig)
 
 
 def compute_distribution(score_path, beat_locations):
