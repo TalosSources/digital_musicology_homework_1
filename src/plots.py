@@ -5,6 +5,7 @@ import numpy as np
 def plot_transfer_function(
     axes,
     midi_beats,
+    unperformed_beats,
     performance_beats,
     performance_beats_estimated_dict,
     performance_type="time",
@@ -13,18 +14,41 @@ def plot_transfer_function(
     Chart for performance time/velocity vs beats position
     """
 
-    colors = ["#2c7bb6", "#fdae61", "#d7191c", "#abd9e9", "#ffffbf"]
+    colors = ["#2c7bb6", "#fdae61", "#d7191c", "#abd9e9"]
 
-    axes.plot(midi_beats, performance_beats, label="original", color=colors[0])
+    # pop the last element from midi beats because we use differences
+
+    if performance_type == "time":
+        midi_beats = midi_beats[:-1]
+        performance_beats = performance_beats[:-1]
+        unperformed_beats = unperformed_beats[:-1]
+
+    # plot unperformed
+    axes.plot(
+        midi_beats,
+        unperformed_beats,
+        label="unperformed",
+        color=colors[-1],
+        linestyle="--",
+        linewidth=2,
+    )
+
+    # plot performance
+
+    axes.plot(
+        midi_beats, performance_beats, label="performed", color=colors[0], linewidth=2
+    )
 
     # plot each estimator
     for i, (k, v) in enumerate(performance_beats_estimated_dict.items()):
-        axes.plot(midi_beats, v, label=k, color=colors[i + 1])
-    axes.set_xlabel("Midi Beats")
+        if performance_type == "time":
+            v = v[:-1]  # one element is redundant
+        axes.plot(midi_beats, v, label=k, color=colors[i + 1], linewidth=2)
+    axes.set_xlabel("MIDI Beat Number")
     if performance_type == "time":
-        axes.set_ylabel("Performed Beats Position (S)")
+        axes.set_ylabel("Beats Time (in BPM)")
     else:
-        axes.set_ylabel("Performed Beats Velocity")
+        axes.set_ylabel("Beats Velocity")
     axes.legend()
     return axes
 
@@ -32,6 +56,7 @@ def plot_transfer_function(
 def plot_average_transfer_function(
     axes,
     midi_beats_list,
+    unperformed_beats_list,  # velocity_beats_list or midi_beats_list
     performance_beats_list,
     performance_beats_estimated_list_dict,
     performance_type="time",
@@ -42,15 +67,21 @@ def plot_average_transfer_function(
 
     (
         max_midi_beats,
+        mean_unperformed_beats,
         mean_performance_beats,
         mean_performance_beats_estimated_dict,
     ) = average_over_subcorpus(
-        midi_beats_list, performance_beats_list, performance_beats_estimated_list_dict
+        midi_beats_list,
+        unperformed_beats_list,
+        performance_beats_list,
+        performance_beats_estimated_list_dict,
+        performance_type,
     )
 
     return plot_transfer_function(
         axes,
         max_midi_beats,
+        mean_unperformed_beats,
         mean_performance_beats,
         mean_performance_beats_estimated_dict,
         performance_type,
@@ -58,23 +89,51 @@ def plot_average_transfer_function(
 
 
 def average_over_subcorpus(
-    midi_beats_list, performance_beats_list, performance_beats_estimated_list_dict
+    midi_beats_list,
+    unperformed_beats_list,
+    performance_beats_list,
+    performance_beats_estimated_list_dict,
+    performance_type,
 ):
     max_length = 0
     max_midi_beats = []
     for midi_beats in midi_beats_list:
-        if len(midi_beats) > max_length:
-            max_length = len(midi_beats)
-            max_midi_beats = midi_beats
+        midi_beats_length = int(midi_beats[-1] / 0.5) + 1
+        if midi_beats_length > max_length:
+            max_length = midi_beats_length
+
+    max_midi_beats = [0.5 * i for i in range(max_length)]
 
     sum_performance_beats = np.zeros(max_length)
     amount_performance_beats = np.zeros(max_length)
-    for performance_beats in performance_beats_list:
-        sum_performance_beats[: len(performance_beats)] += np.array(performance_beats)
-        amount_performance_beats[: len(performance_beats)] += np.ones(
-            len(performance_beats)
-        )
+    for midi_beats, performance_beats in zip(midi_beats_list, performance_beats_list):
+        # not all midi beats start from the same beat
+        start_position = int(midi_beats[0] / 0.5)
+        if performance_type == "time":
+            # convert position in seconds to bpm
+            performance_beats = 60 / np.diff(np.array(performance_beats))
+        sum_performance_beats[
+            start_position : start_position + len(performance_beats)
+        ] += np.array(performance_beats)
+        amount_performance_beats[
+            start_position : start_position + len(performance_beats)
+        ] += np.ones(len(performance_beats))
     mean_performance_beats = sum_performance_beats / amount_performance_beats
+
+    sum_unperformed_beats = np.zeros(max_length)
+    amount_unperformed_beats = np.zeros(max_length)
+    for midi_beats, unperformed_beats in zip(midi_beats_list, unperformed_beats_list):
+        start_position = int(midi_beats[0] / 0.5)
+        if performance_type == "time":
+            # convert position in seconds to bpm
+            unperformed_beats = 60 / np.diff(np.array(unperformed_beats))
+        sum_unperformed_beats[
+            start_position : start_position + len(unperformed_beats)
+        ] += np.array(unperformed_beats)
+        amount_unperformed_beats[
+            start_position : start_position + len(unperformed_beats)
+        ] += np.ones(len(unperformed_beats))
+    mean_unperformed_beats = sum_unperformed_beats / amount_unperformed_beats
 
     mean_performance_beats_estimated_dict = {}
     for (
@@ -83,16 +142,24 @@ def average_over_subcorpus(
     ) in performance_beats_estimated_list_dict.items():
         sum_performance_beats_estimated = np.zeros(max_length)
         amount_performance_beats_estimated = np.zeros(max_length)
-        for performance_beats in performance_beats_estimated_list:
-            sum_performance_beats_estimated[: len(performance_beats)] += np.array(
-                performance_beats
-            )
-            amount_performance_beats_estimated[: len(performance_beats)] += np.ones(
-                len(performance_beats)
-            )
+        for midi_beats, performance_beats in zip(
+            midi_beats_list, performance_beats_estimated_list
+        ):
+            start_position = int(midi_beats[0] / 0.5)
+            sum_performance_beats_estimated[
+                start_position : start_position + len(performance_beats)
+            ] += np.array(performance_beats)
+            amount_performance_beats_estimated[
+                start_position : start_position + len(performance_beats)
+            ] += np.ones(len(performance_beats))
         mean_performance_beats_estimated = (
             sum_performance_beats_estimated / amount_performance_beats_estimated
         )
         mean_performance_beats_estimated_dict[k] = mean_performance_beats_estimated
 
-    return max_midi_beats, mean_performance_beats, mean_performance_beats_estimated_dict
+    return (
+        max_midi_beats,
+        mean_unperformed_beats,
+        mean_performance_beats,
+        mean_performance_beats_estimated_dict,
+    )
