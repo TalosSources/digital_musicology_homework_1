@@ -4,8 +4,6 @@ import xml.etree.ElementTree as ET
 from pathlib import PosixPath
 from typing import Union
 
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 import music21
 import numpy as np
 import pandas as pd
@@ -14,6 +12,7 @@ from pandas import DataFrame
 from scipy.stats import levene
 
 from src.data import DATASET_PATH, get_composer_pieces, get_events_table_from_score
+from src.plots import plot_beat_frequencies
 
 
 def compute_average_distribution(score_paths, sig=(4, 4), subdivision=4):
@@ -22,7 +21,9 @@ def compute_average_distribution(score_paths, sig=(4, 4), subdivision=4):
     Returns a numpy array with the normalized averaged frequencies
     """
 
-    beat_locations = [i / subdivision for i in range(sig[0] * subdivision)]
+    beat_locations = [
+        (i * 4) / (subdivision * sig[1]) for i in range(sig[0] * subdivision)
+    ]
 
     beat_frequencies = None
     for score_path in score_paths:
@@ -34,14 +35,7 @@ def compute_average_distribution(score_paths, sig=(4, 4), subdivision=4):
 
     beat_frequencies /= len(score_paths)
 
-    fig, ax = plt.subplots()
-    ax.plot(beat_locations, beat_frequencies, color="blue")
-    ax.set_xlabel("Onset in Measure")
-    ax.set_ylabel("")
-    ax.set_title("Average Relative Frequency of Onset Locations")
-    ax.set_xlim(0, sig[0])
-    ax.set_ylim(0, 0.5)
-    ax.xaxis.set_major_locator(ticker.MultipleLocator(0.5))
+    plot_beat_frequencies(beat_frequencies, beat_locations)
 
 
 def compute_distribution(score_path, beat_locations):
@@ -95,7 +89,15 @@ def filter_onsets(events: DataFrame, beat_locations):
     return onsets.tolist()
 
 
-def get_average_distribution_given_time_signature(corpus, time_signature):
+def list_all_time_signatures(corpus):
+    sigs = [
+        extract_time_signature_from_xml(corpus / piece / "xml_score.musicxml")
+        for piece in os.listdir(corpus)
+    ]
+    return set(sigs)
+
+
+def get_average_distribution_given_time_signature(corpus, time_signature, subdivision):
     """
     This function extracts all pieces with a specific time signature (ex. 4/4) from a corpus and
     computes the average distribution for them
@@ -109,7 +111,7 @@ def get_average_distribution_given_time_signature(corpus, time_signature):
     score_paths = [corpus / piece / "midi_score.mid" for piece in matching_pieces]
     print(f"Time signature {time_signature} is present in {len(score_paths)} pieces.")
     compute_average_distribution(
-        score_paths, sig=time_signature, subdivision=time_signature[-1]
+        score_paths, sig=time_signature, subdivision=subdivision
     )
 
 

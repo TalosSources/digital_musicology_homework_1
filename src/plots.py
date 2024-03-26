@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import numpy as np
 
 
@@ -96,3 +97,30 @@ def average_over_subcorpus(
         mean_performance_beats_estimated_dict[k] = mean_performance_beats_estimated
 
     return max_midi_beats, mean_performance_beats, mean_performance_beats_estimated_dict
+
+
+def plot_beat_frequencies(beat_locations, beat_frequencies, sig):
+    fig, ax = plt.subplots()
+    ax.plot(beat_locations, beat_frequencies, color="blue")
+    ax.set_xlabel("Onset in Measure (in quarter notes)")
+    ax.set_ylabel("")
+    ax.set_title(
+        f"Average Relative Frequency of Onset Locations\nBeethoven Sonatas in {sig}"
+    )
+    ax.set_xlim(0, 4 * sig[0] / sig[1])
+    ax.set_ylim(0, beat_frequencies.max() * 1.5)
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(0.5))
+
+
+def plot_style_analysis(expr_by_style):
+    """
+    Expr by style may be a map between style name and expressiveness fp number
+    """
+    ...
+
+
+def plot_composer_analysis(expr_by_composer):
+    """
+    Expr by style may be a map between composer name and expressiveness fp number
+    """
+    ...
