@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
+import seaborn as sns
+import pandas as pd
 
 
 def plot_transfer_function(
@@ -193,3 +195,13 @@ def plot_composer_analysis(composers, avg_expr):
     """
     plt.figure(figsize=(20, 5))
     plt.bar(composers, avg_expr)
+
+def plot_violins(dataframe: pd.DataFrame, title:str, limits: tuple = None):
+    plt.figure(figsize=(10, 6))
+    sns.violinplot(data=dataframe, x='Beat', y='Deviation')
+    plt.title(f"{title}")
+    plt.xlabel('Beat Number')
+    if limits:
+        plt.ylim(limits)
+    plt.ylabel('Deviation from IOI-Duration [%]')
+    plt.show()
