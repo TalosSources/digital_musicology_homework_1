@@ -170,8 +170,8 @@ def average_over_subcorpus(
     )
 
 
-def plot_beat_frequencies(results):
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+def plot_beat_frequencies(results, figsize=(15, 4)):
+    fig, axes = plt.subplots(1, 3, figsize=figsize)
     for ax, res in zip(axes, results):
         beats, sig = res
         beat_locations, beat_frequencies = beats
@@ -192,7 +192,7 @@ def plot_composer_and_style(composers, styles, expr_by_composer, expr_by_style):
     ax_comp.invert_yaxis()
     ax_style.invert_yaxis()
     fig.tight_layout()
-    plt.savefig("composer_and_styles.pdf")
+    plt.savefig("plots/composer_and_styles.pdf", dpi=600)
 
 
 def plot_violins(dataframe: pd.DataFrame, title: str, limits: tuple = None, axes=None):
