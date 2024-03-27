@@ -1,9 +1,10 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
-import seaborn
+import seaborn as sns
 
-seaborn.set_style("whitegrid")
+sns.set_style("whitegrid")
+import pandas as pd
 
 
 def plot_transfer_function(
@@ -208,3 +209,12 @@ def plot_composer_and_style(composers, styles, expr_by_composer, expr_by_style):
     ax_style.invert_yaxis()
     fig.tight_layout()
     plt.savefig("composer_and_styles.pdf")
+
+
+def plot_violins(dataframe: pd.DataFrame, title: str, limits: tuple = None, axes=None):
+    sns.violinplot(data=dataframe, x="Beat", y="Deviation", ax=axes)
+    axes.set_title(f"{title}")
+    axes.set_xlabel("Beat Number")
+    if limits:
+        axes.set_ylim(limits)
+    axes.set_ylabel("Deviation from IOI-Duration [%]")

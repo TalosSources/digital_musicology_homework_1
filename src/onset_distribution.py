@@ -135,7 +135,7 @@ def calculate_inter_onset_intervals(annotation: pd.DataFrame, beats: int) -> pd.
     # # calculate time passed since last downbeat
     # interval_timings = annotation.iloc[:,0] - pd.Series(bar_onsets)
 
-    interval_timings = [annotation.iloc[0, 0]] + [
+    interval_timings = [0] + [
         annotation.iloc[i, 0] - annotation.iloc[i - 1, 0]
         for i in range(1, len(annotation))
     ]
@@ -307,3 +307,35 @@ def composer_expressiveness_analysis(composers):
         avg_expr.append(mean_expressiveness(composer_pieces))
 
     return avg_expr
+
+
+def combine_beat_deviations(subcorpus: list[str], beat: int) -> list[pd.DataFrame]:
+    """
+    Combines ioi deviations for each beat in a list of pieces with
+    same time signature for later analysis.
+
+    Args:
+        subcorpus (list[str]): list of paths to the pieces with same time signature
+        beat (int): number of beats in a bar
+
+    Returns:
+        list[pd.DataFrame]: list of dataframes with beat and deviation columns
+    """
+    deviation_per_beat = [[] for _ in range(beat)]
+
+    for piece in subcorpus:
+        interval = annotation_to_inter_onset_intervals(piece)
+        deviation_from_grid = (interval - interval.median()) / interval.median() * 100
+        for i in range(beat):
+            deviation_per_beat[i].extend(deviation_from_grid[i::beat].values)
+
+    deviation_per_beat = [pd.Series(lst) for lst in deviation_per_beat]
+
+    data = pd.DataFrame()
+    for i, deviation_list in enumerate(deviation_per_beat):
+        data = pd.concat(
+            [data, pd.DataFrame({"Beat": i, "Deviation": deviation_list})],
+            ignore_index=True,
+        )
+
+    return data
