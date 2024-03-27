@@ -196,12 +196,11 @@ def plot_composer_analysis(composers, avg_expr):
     plt.figure(figsize=(20, 5))
     plt.bar(composers, avg_expr)
 
-def plot_violins(dataframe: pd.DataFrame, title:str, limits: tuple = None):
-    plt.figure(figsize=(10, 6))
-    sns.violinplot(data=dataframe, x='Beat', y='Deviation')
-    plt.title(f"{title}")
-    plt.xlabel('Beat Number')
+    
+def plot_violins(dataframe: pd.DataFrame, title:str, limits: tuple = None, axes=None):
+    sns.violinplot(data=dataframe, x='Beat', y='Deviation', ax=axes)
+    axes.set_title(f"{title}")
+    axes.set_xlabel('Beat Number')
     if limits:
-        plt.ylim(limits)
-    plt.ylabel('Deviation from IOI-Duration [%]')
-    plt.show()
+        axes.set_ylim(limits)
+    axes.set_ylabel('Deviation from IOI-Duration [%]')
