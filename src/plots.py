@@ -179,15 +179,17 @@ def plot_beat_frequencies(beat_locations, beat_frequencies, sig):
     ax.xaxis.set_major_locator(ticker.MultipleLocator(0.5))
 
 
-def plot_style_analysis(expr_by_style):
+def plot_style_analysis(styles, avg_expr):
     """
     Expr by style may be a map between style name and expressiveness fp number
     """
-    ...
+    plt.figure(figsize=(20, 5))
+    plt.bar(styles, avg_expr)
 
 
-def plot_composer_analysis(expr_by_composer):
+def plot_composer_analysis(composers, avg_expr):
     """
     Expr by style may be a map between composer name and expressiveness fp number
     """
-    ...
+    plt.figure(figsize=(20, 5))
+    plt.bar(composers, avg_expr)

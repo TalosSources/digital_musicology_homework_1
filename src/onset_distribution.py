@@ -276,6 +276,7 @@ def style_expressiveness_analysis(styles_composers):
     This function computes, for each pre-defined musical style, the average expressiveness metric,
     and compares, report and plot? the results
     styles is a list of list of composers
+    NOTE : We weight by performance, but we could also weight by composer or piece
     """
     all_composers = []
     for composers in styles_composers:
@@ -295,9 +296,8 @@ def style_expressiveness_analysis(styles_composers):
     return avg_expr
 
 
-def composer_expressiveness_analysis():
+def composer_expressiveness_analysis(composers):
     df = pd.read_csv(DATASET_PATH / "metadata.csv")
-    composers = df["composer"].unique()
     all_pieces = get_composer_pieces(composers, df=df)
     composers_pieces = [
         all_pieces.loc[all_pieces["composer"] == composer]["performance_annotations"]
@@ -307,8 +307,4 @@ def composer_expressiveness_analysis():
     for composer_pieces in tqdm.tqdm(composers_pieces, "computing averages:"):
         avg_expr.append(mean_expressiveness(composer_pieces))
 
-    res = {}
-    for composer, expressiveness in zip(composers, avg_expr):
-        res[composer] = expressiveness
-
-    return res
+    return avg_expr
