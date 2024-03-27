@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
+import pandas as pd
 import seaborn as sns
 
 sns.set_style("whitegrid")
-import pandas as pd
 
 
 def plot_transfer_function(
@@ -183,22 +183,6 @@ def plot_beat_frequencies(results):
         ax.set_ylim(0, beat_frequencies.max() * 1.25)
         ax.xaxis.set_major_locator(ticker.MultipleLocator(0.5))
     fig.tight_layout()
-
-
-def plot_style_analysis(styles, avg_expr):
-    """
-    Expr by style may be a map between style name and expressiveness fp number
-    """
-    plt.figure(figsize=(20, 5))
-    plt.barh(styles, avg_expr)
-
-
-def plot_composer_analysis(composers, avg_expr):
-    """
-    Expr by style may be a map between composer name and expressiveness fp number
-    """
-    plt.figure(figsize=(20, 5))
-    plt.barh(composers, avg_expr)
 
 
 def plot_composer_and_style(composers, styles, expr_by_composer, expr_by_style):
