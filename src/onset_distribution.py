@@ -12,7 +12,6 @@ from pandas import DataFrame
 from scipy.stats import levene
 
 from src.data import DATASET_PATH, get_composer_pieces, get_events_table_from_score
-from src.plots import plot_beat_frequencies
 
 
 def compute_average_distribution(score_paths, sig=(4, 4), subdivision=4):
@@ -35,7 +34,7 @@ def compute_average_distribution(score_paths, sig=(4, 4), subdivision=4):
 
     beat_frequencies /= len(score_paths)
 
-    plot_beat_frequencies(beat_locations, beat_frequencies, sig)
+    return beat_locations, beat_frequencies
 
 
 def compute_distribution(score_path, beat_locations):
@@ -110,7 +109,7 @@ def get_average_distribution_given_time_signature(corpus, time_signature, subdiv
     ]
     score_paths = [corpus / piece / "midi_score.mid" for piece in matching_pieces]
     print(f"Time signature {time_signature} is present in {len(score_paths)} pieces.")
-    compute_average_distribution(
+    return compute_average_distribution(
         score_paths, sig=time_signature, subdivision=subdivision
     )
 

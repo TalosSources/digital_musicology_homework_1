@@ -324,16 +324,16 @@ def train_test_split(beats_list_dict, test_size=0.2):
     return train_beats_list_dict, test_beats_list_dict
 
 
-classical_composers = ["Mozart", "Haydn"]  # Not entirely classical
 baroque_composers = ["Bach"]
+classical_composers = ["Haydn", "Mozart"]
 romantic_composers = [
     "Beethoven",
-    "Brahms",
-    "Chopin",
-    "Liszt",
     "Schubert",
-    "Schumann",
+    "Chopin",
     "Glinka",
+    "Schumann",
+    "Liszt",
+    "Brahms",
 ]
 impressionist_composers = ["Debussy", "Ravel"]
 late_russian_composers = [

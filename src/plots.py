@@ -1,6 +1,9 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
+import seaborn
+
+seaborn.set_style("whitegrid")
 
 
 def plot_transfer_function(
@@ -166,17 +169,19 @@ def average_over_subcorpus(
     )
 
 
-def plot_beat_frequencies(beat_locations, beat_frequencies, sig):
-    fig, ax = plt.subplots()
-    ax.plot(beat_locations, beat_frequencies, color="blue")
-    ax.set_xlabel("Onset in Measure (in quarter notes)")
-    ax.set_ylabel("")
-    ax.set_title(
-        f"Average Relative Frequency of Onset Locations\nBeethoven Sonatas in {sig}"
-    )
-    ax.set_xlim(0, 4 * sig[0] / sig[1])
-    ax.set_ylim(0, beat_frequencies.max() * 1.5)
-    ax.xaxis.set_major_locator(ticker.MultipleLocator(0.5))
+def plot_beat_frequencies(results):
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+    for ax, res in zip(axes, results):
+        beats, sig = res
+        beat_locations, beat_frequencies = beats
+        ax.plot(beat_locations, beat_frequencies, color="blue")
+        ax.set_xlabel("Onset in Measure (in quarter notes)")
+        ax.set_ylabel("Average relative frequency")
+        ax.set_title(f"Time signature: {sig}")
+        ax.set_xlim(0, 4 * sig[0] / sig[1])
+        ax.set_ylim(0, beat_frequencies.max() * 1.25)
+        ax.xaxis.set_major_locator(ticker.MultipleLocator(0.5))
+    fig.tight_layout()
 
 
 def plot_style_analysis(styles, avg_expr):
@@ -184,7 +189,7 @@ def plot_style_analysis(styles, avg_expr):
     Expr by style may be a map between style name and expressiveness fp number
     """
     plt.figure(figsize=(20, 5))
-    plt.bar(styles, avg_expr)
+    plt.barh(styles, avg_expr)
 
 
 def plot_composer_analysis(composers, avg_expr):
@@ -192,4 +197,14 @@ def plot_composer_analysis(composers, avg_expr):
     Expr by style may be a map between composer name and expressiveness fp number
     """
     plt.figure(figsize=(20, 5))
-    plt.bar(composers, avg_expr)
+    plt.barh(composers, avg_expr)
+
+
+def plot_composer_and_style(composers, styles, expr_by_composer, expr_by_style):
+    fig, (ax_comp, ax_style) = plt.subplots(1, 2, figsize=(15, 5))
+    ax_comp.barh(composers, expr_by_composer)
+    ax_style.barh(styles, expr_by_style)
+    ax_comp.invert_yaxis()
+    ax_style.invert_yaxis()
+    fig.tight_layout()
+    plt.savefig("composer_and_styles.pdf")
